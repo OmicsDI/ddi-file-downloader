@@ -23,7 +23,7 @@ import java.io.File;
 		"downloader.targetFileName=/tmp/metabolome/dataset_index.xml",
 		"file.provider=local"
 })
-public class DdiFileDownloaderApplicationTests {
+public class ITDdiFileDownloaderApplication {
 
 	@Autowired
 	private FileDownloaderTaskProperties taskProperties;
