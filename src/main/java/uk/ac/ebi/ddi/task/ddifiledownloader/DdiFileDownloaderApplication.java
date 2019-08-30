@@ -24,52 +24,56 @@ import java.security.cert.X509Certificate;
 @SpringBootApplication
 public class DdiFileDownloaderApplication implements CommandLineRunner {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(DdiFileServiceApplication.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DdiFileServiceApplication.class);
 
-	@Autowired
-	private FileDownloaderTaskProperties taskProperties;
+    @Autowired
+    private FileDownloaderTaskProperties taskProperties;
 
-	@Autowired
-	private IFileSystem fileSystem;
+    @Autowired
+    private IFileSystem fileSystem;
 
-	public static void main(String[] args) {
-		SpringApplication.run(DdiFileDownloaderApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(DdiFileDownloaderApplication.class, args);
+    }
 
-	@Override
-	public void run(String... args) throws Exception {
-		TrustManager[] trustAllCerts = new TrustManager[]{
-				new X509TrustManager() {
-					public X509Certificate[] getAcceptedIssuers() {
-						return null;
-					}
-					public void checkClientTrusted(X509Certificate[] certs, String authType) { }
-					public void checkServerTrusted(X509Certificate[] certs, String authType) { }
-				}
-		};
+    @Override
+    public void run(String... args) throws Exception {
+        TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
 
-		try {
-			SSLContext sc = SSLContext.getInstance("SSL");
-			sc.init(null, trustAllCerts, new java.security.SecureRandom());
-			HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-		} catch (Exception e) {
-			LOGGER.error("Exception occurred, ", e);
-		}
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                    }
 
-		URL url = new URL(taskProperties.getOriginalFileURL());
-		URLConnection connection = url.openConnection();
-		File tmpOutput = File.createTempFile("ddi", "downloader.tmp");
-		try (InputStream is = connection.getInputStream();
-			 FileOutputStream fileOutput = new FileOutputStream(tmpOutput)) {
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                    }
+                }
+        };
 
-			byte[] buffer = new byte[2048];
-			int bufferLength; //used to store a temporary size of the buffer
+        try {
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        } catch (Exception e) {
+            LOGGER.error("Exception occurred, ", e);
+        }
 
-			while ((bufferLength = is.read(buffer)) > 0) {
-				fileOutput.write(buffer, 0, bufferLength);
-			}
-		}
+        URL url = new URL(taskProperties.getOriginalFileURL());
+        URLConnection connection = url.openConnection();
+        File tmpOutput = File.createTempFile("ddi", "downloader.tmp");
+        try (InputStream is = connection.getInputStream();
+             FileOutputStream fileOutput = new FileOutputStream(tmpOutput)) {
 
-		fileSystem.copyFile(tmpOutput, taskProperties.getTargetFileName());
-	}
+            byte[] buffer = new byte[2048];
+            int bufferLength; //used to store a temporary size of the buffer
+
+            while ((bufferLength = is.read(buffer)) > 0) {
+                fileOutput.write(buffer, 0, bufferLength);
+            }
+        }
+
+        fileSystem.copyFile(tmpOutput, taskProperties.getTargetFileName());
+    }
 }
